@@ -110,30 +110,30 @@ The x-axis represents time in days, and the y-axis represents the number of infe
 - `plot` and `scatter!` from the `Plots.jl` library for creating visualizations.
 - `Force_of_infection!` for details on the model equations used.
 """
-function data_fitting(c, β, γ, N, S0, I0, R0, data)
-    # Define the time span based on the length of the data points (21 days)
-    tspan = (0.0, length(data) - 1)  # Time span: 0 to 20
+# function data_fitting(c, β, γ, N, S0, I0, R0, data)
+#     # Define the time span based on the length of the data points (21 days)
+#     tspan = (0.0, length(data) - 1)  # Time span: 0 to 20
 
-    # Create a corresponding time vector for the data points
-    real_data_time = collect(tspan[1]:tspan[2])
-    real_data_infected = data
+#     # Create a corresponding time vector for the data points
+#     real_data_time = collect(tspan[1]:tspan[2])
+#     real_data_infected = data
 
-    # Initial conditions
-    u0 = [S0 * N, I0 * N, R0 * N]  # Scale initial proportions to absolute values
-    # Define the ODE problem
-    prob = ODEProblem(Force_of_infection!, u0, tspan, [c, β, γ, N])
+#     # Initial conditions
+#     u0 = [S0 * N, I0 * N, R0 * N]  # Scale initial proportions to absolute values
+#     # Define the ODE problem
+#     prob = ODEProblem(Force_of_infection!, u0, tspan, [c, β, γ, N])
 
-    # Solve the problem with a dense solution for smooth plotting
-    solution = solve(prob, saveat=0.1)
+#     # Solve the problem with a dense solution for smooth plotting
+#     solution = solve(prob, saveat=0.1)
 
-    # Extract the time points and infected values from the model solution
-    model_time = solution.t
-    model_infected = solution[2, :]  # Extract the infected individuals over time
+#     # Extract the time points and infected values from the model solution
+#     model_time = solution.t
+#     model_infected = solution[2, :]  # Extract the infected individuals over time
 
-    # Plot the model output vs. the real data
-    plt = plot(model_time, model_infected, label="Model Infected", xlabel="Time (Days)", ylabel="Number Infected",
-        title="Model vs. Real Data", lw=2, color=:blue)
-    scatter!(real_data_time, real_data_infected, label="Data", marker=:circle, ms=3, color=:orange)
+#     # Plot the model output vs. the real data
+#     plt = plot(model_time, model_infected, label="Model Infected", xlabel="Time (Days)", ylabel="Number Infected",
+#         title="Model vs. Real Data", lw=2, color=:blue)
+#     scatter!(real_data_time, real_data_infected, label="Data", marker=:circle, ms=3, color=:orange)
 
-    return plt
-end
+#     return plt
+# end

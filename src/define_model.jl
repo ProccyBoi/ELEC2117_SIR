@@ -360,32 +360,3 @@ function run_model(model_type::Symbol, c, β, γ, herd_threshold, S0, I0, R0, ts
     # Solve the problem and return the solution
     return solve(prob)  # Make sure to solve and return the solution
 end
-
-### PROTOTYPE ###
-# Function to run the modified SIRS model
-# function run_SIRS_model(c, β, γ, δ, ρ, α, N, S0, I0, SevI0, R0, tspan)
-#     # Initial conditions
-#     u0 = [S0 * N, I0 * N, SevI0 * N, R0 * N]  # Scale initial proportions to absolute values
-
-#     # Define the ODE problem
-#     prob = ODEProblem(SIRS_model!, u0, tspan, [β, γ, δ, ρ, α, N])
-
-#     # Solve the problem
-#     solution = solve(prob)
-
-#     return solution
-# end
-
-# function SIRS_model!(du, u, params, t)
-#     S, I, SevI, R = u  # Current values of S, I, SevI, and R compartments
-#     β, γ, δ, ρ, α, N = params  # Parameters
-
-#     # Calculate force of infection: λ = β * I / N
-#     λ = β * I / N
-
-#     # SIRS model equations with severe infections
-#     du[1] = -λ * S + α * R                     # dS/dt
-#     du[2] = λ * S - γ * I - δ * I              # dI/dt
-#     du[3] = δ * I - ρ * SevI                   # dSevI/dt
-#     du[4] = γ * I + ρ * SevI - α * R           # dR/dt
-# end

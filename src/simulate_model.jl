@@ -90,13 +90,7 @@ function simulate_model(model_type::Symbol, c, β, γ, herd_threshold, S0, I0, R
     infected_interp = [solution(t)[2] for t in fine_time_points]
 
     # Plot the infected compartment from the model
-    plt = plot(fine_time_points, infected_interp, label="Model Infected", xlabel="Time (Days)", ylabel="Number Infected",
-        title="Number of Infected Individuals Over Time", lw=2, color=:blue)
-
-    # Overlay real-world data if provided
-    if !isempty(real_data_time) && !isempty(real_data_infected)
-        scatter!(real_data_time, real_data_infected, label="Real Data", marker=:circle, ms=6, color=:orange)
-    end
+    plt = plot_model(solution)
 
     return plt  # Return the plot object
 end
