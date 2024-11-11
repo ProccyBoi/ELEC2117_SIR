@@ -1,101 +1,128 @@
-# Define the SIRS model equations with severe infection
-function SIRS_model!(du, u, params, t)
-    S, I, SevI, R = u  # Current values of S, I, SevI, and R compartments
-    β, γ, δ, γ_s, α, N = params  # Parameters
-
-    # Calculate force of infection: λ = β * I / N
-    λ = β * I / N
-
-    # SIRS model equations with severe infections
-    du[1] = -λ * S + α * R                     # dS/dt
-    du[2] = λ * S - γ * I                      # dI/dt
-    du[3] = δ * I - γ_s * SevI                 # dSevI/dt
-    du[4] = γ * (I - δ * I) + γ_s * SevI - α * R  # dR/dt
+# Define a struct to hold the model parameters
+struct SIRSParameters
+    β::Float64      # Transmission rate
+    γ::Float64      # Recovery rate for mild cases
+    δ::Float64      # Proportion progressing to severe infection
+    γ_s::Float64    # Recovery rate for severe cases
+    α::Float64      # Re-susceptibility rate after recovery
+    N::Int          # Total population
 end
 
-# Function to run the modified SIRS model
-function run_SIRS_model(β, γ, δ, γ_s, α, N, S0, I0, SevI0, R0, tspan)
-    # Initial conditions
-    u0 = [S0, I0, SevI0, R0]  # Initial values for S, I, SevI, and R
+# Define a keyword-based constructor for SIRSParameters
+function SIRSParameters(; β::Float64, γ::Float64, δ::Float64, γ_s::Float64, α::Float64, N::Int)
+    return SIRSParameters(β, γ, δ, γ_s, α, N)
+end
+
+# Define the SIRS model with absolute population values
+"""
+    SIRS_model!(du, u, p, t)
+
+Differential equation for the SIRS model with severe infection.
+
+# Arguments
+- `du::Vector`: Derivative of state variables (output).
+- `u::Vector`: Current state variables `[S, I, SevI, R]`.
+- `p::SIRSParameters`: Model parameters.
+- `t::Float64`: Time variable (not used directly).
+
+# Model Equations
+The equations model the rates of change for Susceptible, Infectious, Severe Infection, and Recovered populations.
+"""
+function SIRS_model!(du, u, p::SIRSParameters, t)
+    S, I, SevI, R = u
+    β, γ, δ, γ_s, α, N = p.β, p.γ, p.δ, p.γ_s, p.α, p.N
+
+    # Force of infection
+    λ = β * I / N
+
+    # Differential equations
+    du[1] = -λ * S + α * R                         # Susceptible
+    du[2] = λ * S - γ * I                          # Infectious
+    du[3] = δ * I * γ - γ_s * SevI                 # Severe Infection
+    du[4] = (1 - δ) * γ * I + γ_s * SevI - α * R   # Recovered
+end
+
+# Function to run the SIRS model
+"""
+    run_SIRS_model(params, S0, I0, SevI0, R0, tspan)
+
+Runs the SIRS model simulation with the given parameters and initial conditions.
+
+# Arguments
+- `params::SIRSParameters`: Struct containing model parameters.
+- `S0::Int`: Initial susceptible count.
+- `I0::Int`: Initial infected count.
+- `SevI0::Int`: Initial severe infection count.
+- `R0::Int`: Initial recovered count.
+- `tspan::Tuple{Float64, Float64}`: Time span for the simulation.
+
+# Returns
+- `solution`: Solution object from DifferentialEquations.jl.
+"""
+function run_SIRS_model(params::SIRSParameters, S0::Int, I0::Int, SevI0::Int, R0::Int, tspan::Tuple{Float64, Float64})
+    # Initial conditions as absolute counts
+    u0 = [S0, I0, SevI0, R0]
 
     # Define the ODE problem
-    prob = ODEProblem(SIRS_model!, u0, tspan, [β, γ, δ, γ_s, α, N])
+    prob = ODEProblem(SIRS_model!, u0, tspan, params)
 
-    # Solve the problem with `saveat` ensuring one point per day
-    solution = solve(prob, Tsit5(), saveat=collect(tspan[1]:1:tspan[2]))  # Generate solution at every day (integer)
-
+    # Solve the problem with daily intervals
+    solution = solve(prob, Tsit5(), saveat=1.0)
     return solution
 end
 
+# Function to plot the results
+"""
+    plot_SIRS_model(solution; title="SIRS Model Results", ylabel="Population", color_scheme=:default)
 
-# Function to plot the SIRS model solution
-function plot_SIRS(solution)
-    plt = plot(solution, xlabel="Time (days)", ylabel="Number of People", label=["Susceptible" "Infectious" "Severe Illness" "Recovered"], lw=2)
+Plots the solution of the SIRS model.
+
+# Arguments
+- `solution`: Solution object from DifferentialEquations.jl.
+- `title`: Title of the plot (optional).
+- `ylabel`: Y-axis label (optional).
+- `color_scheme`: Color scheme for the plot (optional).
+
+# Returns
+- `plt`: Plot object.
+"""
+function plot_SIRS_model(solution; title="SIRS Model Results", ylabel="Population", color_scheme=:default)
+    plt = plot(solution.t, solution[1, :], label="Susceptible", xlabel="Time (days)", ylabel=ylabel, lw=2, color=:blue)
+    plot!(plt, solution.t, solution[2, :], label="Infectious", lw=2, color=:orange)
+    plot!(plt, solution.t, solution[3, :], label="Severe Illness", lw=2, color=:green)
+    plot!(plt, solution.t, solution[4, :], label="Recovered", lw=2, color=:purple)
+    title!(plt, title)
     return plt
 end
 
-# Function to simulate the SIRS model using the same parameters as the Python code
+# Example usage function
+"""
+    simulate_SIRS()
+
+Simulates and plots the SIRS model with default parameters.
+"""
 function simulate_SIRS()
-    # Parameters
-    N = 6000          # Total population
-    β = 0.25           # Infection rate (Beta * c)
-    γ = 1 / 7           # Recovery rate for infected individuals
-    ps = 0.2          # Proportion developing severe illness
-    δ = ps * γ        # Transition rate to severe illness
-    γ_s = 1 / 14        # Recovery rate for severe illness
-    α = 1 / 30          # Rate of return to susceptibility
-
-    # Initial conditions: [S, I, SevI, R]
-    S0, I0, SevI0, R0 = 5999, 1, 0, 0
-
-    # Time span
-    tspan = (0.0, 160.0)
-
-    # Run the model
-    solution = run_SIRS_model(β, γ, δ, γ_s, α, N, S0, I0, SevI0, R0, tspan)
-
-    # Plot the results
-    plt = plot_SIRS(solution)
-    display(plt)
-
-    println("Simulation complete!")
-end
-
-# Function to plot the model against data
-function data_fitting(β, γ, δ, γ_s, α, N, S0, I0, SevI0, R0, data_infected, data_severe)
-    # Define the time span based on the length of the data points
-    tspan = (0.0, length(data_infected) - 1)  # Time span: 0 to length of data - 1
-
-    # Create a corresponding time vector for the data points
-    real_data_time = collect(tspan[1]:tspan[2])
-    real_data_infected = data_infected
-    real_data_severe = data_severe
+    # Define default parameters using keyword arguments
+    params = SIRSParameters(
+        β = 0.28,             # Transmission rate
+        γ = 1 / 7,            # Recovery rate for infectious individuals
+        δ = 0.2,              # Proportion progressing to severe infection
+        γ_s = 1 / 14,         # Recovery rate for severe cases
+        α = 1 / 30,           # Re-susceptibility rate after recovery
+        N = 6000              # Total population
+    )
 
     # Initial conditions
-    u0 = [S0 * N, I0 * N, SevI0 * N, R0 * N]  # Scale initial proportions to absolute values
+    S0, I0, SevI0, R0 = params.N - 1, 1, 0, 0
 
-    # Define the ODE problem
-    prob = ODEProblem(SIRS_model!, u0, tspan, [β, γ, δ, γ_s, α, N])
+    # Time span
+    tspan = (0.0, 1000.0)  # Simulate for 1000 days
 
-    # Solve the problem with a dense solution for smooth plotting
-    solution = solve(prob, Tsit5(), saveat=0.1)
-
-    # Extract the time points and compartment values from the model solution
-    model_time = solution.t
-    model_infected = solution[2, :]  # Extract the infected individuals over time
-    model_severe = solution[3, :]    # Extract the severe illness individuals over time
-
-    # Plot the model output vs. the real data for both Infected and Severe Illness
-    plt = plot(model_time, model_infected, label="Model Infected", xlabel="Time (Days)", ylabel="Number of Individuals",
-        title="Model vs. Real Data", lw=2, color=:blue)
-    scatter!(real_data_time, real_data_infected, label="Data Infected", marker=:circle, ms=3, color=:blue)
-
-    plot!(model_time, model_severe, label="Model Severe Illness", lw=2, color=:purple)
-    scatter!(real_data_time, real_data_severe, label="Data Severe Illness", marker=:diamond, ms=4, color=:purple)
-
-    return plt
+    # Run model and plot results
+    solution = run_SIRS_model(params, S0, I0, SevI0, R0, tspan)
+    plt = plot_SIRS_model(solution, title="SIRS Model with Population Dynamics", ylabel="Number of People")
+    display(plt)
 end
 
-# data_infected = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 7, 20, 3, 29, 14, 11, 12, 16, 10, 58]
-# data_severe = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 5]
-# data_fitting(0.28, 1/7, 0.2 * (1/7), 1/14, 1/30, 6000, 5999/6000, 1/6000, 0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 7, 20, 3, 29, 14, 11, 12, 16, 10, 58], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 5])
+# Uncomment the line below to run an example simulation and plot the results
+# simulate_SIRS()
