@@ -1,6 +1,3 @@
-using DifferentialEquations
-using Plots
-
 # Define a struct to hold the SIRS model parameters with intervention
 struct SIRSInterventionParameters
     β::Float64         # Transmission rate
@@ -124,7 +121,7 @@ function simulate_intervention()
 
     # Initial conditions (absolute population counts, converted to Float64)
     S0, I0, SevI0, R0 = Float64(params.N - 1), Float64(1), 0.0, 0.0
-    tspan = (0.0, 300.0)  # Simulation for 300 days
+    tspan = (0.0, 180.0)  # Simulation for 300 days
 
     # Run model and plot results
     solution = run_intervention(params, S0, I0, SevI0, R0, tspan)
@@ -154,15 +151,15 @@ function estimate_infection_severity_ranges()
 
     # Define model parameters with intervention using the keyword-based constructor
     params = SIRSInterventionParameters(
-        β=0.0372 * 8,      # Transmission probability (will be overridden in the loop)
+        β=0.0365 * 8,      # Initial transmission probability (will be overridden in the loop)
         γ=1 / 7,           # Recovery rate for mild cases
         δ=0.2,             # Proportion progressing to severe infection
         γ_s=1 / 14,        # Recovery rate for severe cases
         α=1 / 30,          # Re-susceptibility rate after recovery
         N=6000,            # Total population
         intervention_day=30,  # Day on which intervention starts
-        ε_i=0.3,           # Efficacy of intervention
-        p_i=0.8            # Proportion complying with intervention
+        ε_i=0.3,           # Initial efficacy (will be overridden in the loop)
+        p_i=0.816            # Proportion complying with intervention
     )
 
     # Define the time span for the simulation
@@ -239,7 +236,7 @@ function plot_intervention_trajectories()
 
     # Define model parameters with intervention
     params = SIRSInterventionParameters(
-        β=0.0372 * 8,      # Initial transmission probability (will be overridden in the loop)
+        β=0.0365 * 8,      # Initial transmission probability (will be overridden in the loop)
         γ=1 / 7,           # Recovery rate for mild cases
         δ=0.2,             # Proportion progressing to severe infection
         γ_s=1 / 14,        # Recovery rate for severe cases
@@ -247,7 +244,7 @@ function plot_intervention_trajectories()
         N=6000,            # Total population
         intervention_day=30,  # Day on which intervention starts
         ε_i=0.3,           # Initial efficacy (will be overridden in the loop)
-        p_i=0.8            # Proportion complying with intervention
+        p_i=0.816            # Proportion complying with intervention
     )
 
     # Default initial conditions (can be modified directly here)
@@ -448,7 +445,7 @@ end
 function find_optimal_compliance_across_beta_range()
     # Fixed model parameters, excluding β and p_i, which vary
     γ = 1 / 7
-    δ = 0.2
+    δ = 0.15
     γ_s = 1 / 14
     α = 1 / 30
     N = 6000
@@ -524,6 +521,7 @@ function find_optimal_compliance_across_beta_range()
         model_severe = [solution(t)[3] for t in 0:100]
 
         # Plot infected and severe cases for this pair
+        β = β / 8
         plot!(plt, 0:100, model_infected, label="Model Infected (β=$β, p_i=$p_i)", lw=2, color=:blue)
         plot!(plt, 0:100, model_severe, label="Model Severe (β=$β, p_i=$p_i)", lw=2, color=:red)
     end
@@ -535,5 +533,5 @@ function find_optimal_compliance_across_beta_range()
     # Display the plot
     display(plt)
 
-    return top_5_pairs
+    return
 end

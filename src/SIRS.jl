@@ -1,92 +1,95 @@
-# Define a struct to hold the model parameters
+# Define a struct to hold the model parameters for the SIRS model
 struct SIRSParameters
-    β::Float64      # Transmission rate
-    γ::Float64      # Recovery rate for mild cases
-    δ::Float64      # Proportion progressing to severe infection
-    γ_s::Float64    # Recovery rate for severe cases
-    α::Float64      # Re-susceptibility rate after recovery
-    N::Int          # Total population
+    β::Float64      # Transmission rate: rate at which susceptible individuals become infected
+    γ::Float64      # Recovery rate for mild cases: rate at which infectious individuals recover
+    δ::Float64      # Proportion progressing to severe infection: fraction of infections that become severe
+    γ_s::Float64    # Recovery rate for severe cases: rate at which severe cases recover
+    α::Float64      # Re-susceptibility rate after recovery: rate at which recovered individuals become susceptible again
+    N::Int          # Total population: size of the population being modeled
 end
 
-# Define a keyword-based constructor for SIRSParameters
+# Keyword-based constructor for SIRSParameters to initialize model parameters more flexibly
 function SIRSParameters(; β::Float64, γ::Float64, δ::Float64, γ_s::Float64, α::Float64, N::Int)
     return SIRSParameters(β, γ, δ, γ_s, α, N)
 end
 
-# Define the SIRS model with absolute population values
+# Differential equation function for the SIRS model including severe infections
 """
     SIRS_model!(du, u, p, t)
 
-Differential equation for the SIRS model with severe infection.
+Defines the SIRS model equations with an additional severe infection compartment.
 
 # Arguments
-- `du::Vector`: Derivative of state variables (output).
+- `du::Vector`: Output vector for derivatives of state variables.
 - `u::Vector`: Current state variables `[S, I, SevI, R]`.
 - `p::SIRSParameters`: Model parameters.
-- `t::Float64`: Time variable (not used directly).
+- `t::Float64`: Time variable (included for ODE compatibility).
 
 # Model Equations
-The equations model the rates of change for Susceptible, Infectious, Severe Infection, and Recovered populations.
+Calculates the rate of change for each compartment: Susceptible, Infectious, Severe Infection, and Recovered.
 """
 function SIRS_model!(du, u, p::SIRSParameters, t)
+    # Unpack current state variables
     S, I, SevI, R = u
+    # Unpack model parameters from the struct
     β, γ, δ, γ_s, α, N = p.β, p.γ, p.δ, p.γ_s, p.α, p.N
 
-    # Force of infection
+    # Force of infection (transmission rate scaled by infectious individuals)
     λ = β * I / N
 
-    # Differential equations
-    du[1] = -λ * S + α * R                         # Susceptible
-    du[2] = λ * S - γ * I                          # Infectious
-    du[3] = δ * I * γ - γ_s * SevI                 # Severe Infection
-    du[4] = (1 - δ) * γ * I + γ_s * SevI - α * R   # Recovered
+    # Define the differential equations for each compartment
+    du[1] = -λ * S + α * R                         # Susceptible (S)
+    du[2] = λ * S - γ * I                          # Infectious (I)
+    du[3] = δ * I * γ - γ_s * SevI                 # Severe Infection (SevI)
+    du[4] = (1 - δ) * γ * I + γ_s * SevI - α * R   # Recovered (R)
 end
 
-# Function to run the SIRS model
+# Function to run the SIRS model simulation with specified initial conditions and parameters
 """
-    run_SIRS_model(params, S0, I0, SevI0, R0, tspan)
+    run_SIRS(params, S0, I0, SevI0, R0, tspan)
 
-Runs the SIRS model simulation with the given parameters and initial conditions.
+Runs the SIRS model simulation with given parameters and initial conditions.
 
 # Arguments
 - `params::SIRSParameters`: Struct containing model parameters.
-- `S0::Int`: Initial susceptible count.
-- `I0::Int`: Initial infected count.
-- `SevI0::Int`: Initial severe infection count.
-- `R0::Int`: Initial recovered count.
-- `tspan::Tuple{Float64, Float64}`: Time span for the simulation.
+- `S0::Int`: Initial count of susceptible individuals.
+- `I0::Int`: Initial count of infectious individuals.
+- `SevI0::Int`: Initial count of severe infection cases.
+- `R0::Int`: Initial count of recovered individuals.
+- `tspan::Tuple{Float64, Float64}`: Time span for the simulation (start and end times).
 
 # Returns
-- `solution`: Solution object from DifferentialEquations.jl.
+- `solution`: Solution object from DifferentialEquations.jl for further analysis or plotting.
 """
-function run_SIRS_model(params::SIRSParameters, S0::Int, I0::Int, SevI0::Int, R0::Int, tspan::Tuple{Float64, Float64})
-    # Initial conditions as absolute counts
+function run_SIRS(params::SIRSParameters, S0::Int, I0::Int, SevI0::Int, R0::Int, tspan::Tuple{Float64,Float64})
+    # Set initial conditions as a vector with compartment values
     u0 = [S0, I0, SevI0, R0]
 
-    # Define the ODE problem
+    # Define the ODE problem with SIRS model equations
     prob = ODEProblem(SIRS_model!, u0, tspan, params)
 
-    # Solve the problem with daily intervals
+    # Solve the ODE problem using a solver with daily intervals (saveat=1.0)
     solution = solve(prob, Tsit5(), saveat=1.0)
     return solution
 end
 
-# Function to plot the results
+# Function to plot results from the SIRS model simulation
 """
-    plot_SIRS_model(solution; title="SIRS Model Results", ylabel="Population", color_scheme=:default)
+    plot_SIRS(solution; title="SIRS Model Results", ylabel="Population", color_scheme=:default)
 
-Plots the solution of the SIRS model.
+Plots the solution of the SIRS model, showing the dynamics of each compartment.
 
 # Arguments
 - `solution`: Solution object from DifferentialEquations.jl.
 - `title`: Title of the plot (optional).
-- `ylabel`: Y-axis label (optional).
+- `ylabel`: Label for the Y-axis (optional).
 - `color_scheme`: Color scheme for the plot (optional).
 
 # Returns
 - `plt`: Plot object.
 """
-function plot_SIRS_model(solution; title="SIRS Model Results", ylabel="Population", color_scheme=:default)
+function plot_SIRS(solution; title="SIRS Model Results", ylabel="Population", color_scheme=:default)
+    # Plot each compartment in the solution with appropriate labels and colors
     plt = plot(solution.t, solution[1, :], label="Susceptible", xlabel="Time (days)", ylabel=ylabel, lw=2, color=:blue)
     plot!(plt, solution.t, solution[2, :], label="Infectious", lw=2, color=:orange)
     plot!(plt, solution.t, solution[3, :], label="Severe Illness", lw=2, color=:green)
@@ -95,34 +98,33 @@ function plot_SIRS_model(solution; title="SIRS Model Results", ylabel="Populatio
     return plt
 end
 
-# Example usage function
+# Example function to simulate and plot the SIRS model with default parameters
 """
     simulate_SIRS()
 
-Simulates and plots the SIRS model with default parameters.
+Simulates and plots the SIRS model using default parameters.
 """
 function simulate_SIRS()
-    # Define default parameters using keyword arguments
+    # Define default model parameters for the SIRS simulation
     params = SIRSParameters(
-        β = 0.28,             # Transmission rate
-        γ = 1 / 7,            # Recovery rate for infectious individuals
-        δ = 0.2,              # Proportion progressing to severe infection
-        γ_s = 1 / 14,         # Recovery rate for severe cases
-        α = 1 / 30,           # Re-susceptibility rate after recovery
-        N = 6000              # Total population
+        β=0.28,             # Transmission rate
+        γ=1 / 7,            # Recovery rate for infectious individuals
+        δ=0.2,              # Fraction of infections progressing to severe illness
+        γ_s=1 / 14,         # Recovery rate for severe cases
+        α=1 / 30,           # Rate of becoming susceptible again after recovery
+        N=6000              # Total population size
     )
 
-    # Initial conditions
+    # Set initial conditions (mostly susceptible with one infectious case)
     S0, I0, SevI0, R0 = params.N - 1, 1, 0, 0
 
-    # Time span
-    tspan = (0.0, 1000.0)  # Simulate for 1000 days
+    # Time span for simulation (0 to 100 days)
+    tspan = (0.0, 100.0)
 
-    # Run model and plot results
-    solution = run_SIRS_model(params, S0, I0, SevI0, R0, tspan)
-    plt = plot_SIRS_model(solution, title="SIRS Model with Population Dynamics", ylabel="Number of People")
+    # Run the model and obtain solution
+    solution = run_SIRS(params, S0, I0, SevI0, R0, tspan)
+
+    # Plot the results with custom title and labels
+    plt = plot_SIRS(solution, title="SIRS Model with Population Dynamics", ylabel="Number of People")
     display(plt)
 end
-
-# Uncomment the line below to run an example simulation and plot the results
-# simulate_SIRS()
