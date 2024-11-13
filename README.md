@@ -1,25 +1,30 @@
-### Project Name: Epidemic Modeling in Julia
-## Description
-This project is a comprehensive Julia-based implementation for simulating, analyzing, and visualizing epidemic models. The repository includes several scripts that define different components of epidemic models such as SIR, immunity, and plotting modules. Each script serves a specific role in creating a modular, extendable, and high-performance simulation environment for studying epidemiological dynamics.
+# ELEC2117 Infectious Disease Modeling Project Documentation
 
-## Repository Structure
-The repository contains the following Julia scripts, each serving a unique purpose in the project:
+## Project Overview
+The ELEC2117 Infectious Disease Modeling Project uses mathematical models to simulate an infectious disease outbreak in a small town. The project’s primary goal is to aid the Department of Health in understanding outbreak dynamics, estimating infection rates, and assessing intervention efficacy. Implemented in Julia, the project incorporates SIR and SIRS epidemiological models with public health interventions to analyze and control infection spread.
 
-cli.jl: Command-line interface script for executing different simulations and models. It provides an entry point for running the entire program, managing inputs, and setting various parameters for simulations.
+## Project Files
 
-define_model.jl: Contains the core functions and structures to define different types of epidemiological models. This includes the SIR model and other extensions for incorporating immunity and other factors.
+This project is organized into several Julia scripts, each designed for specific modeling and analysis tasks:
 
-error.jl: Handles error reporting and debugging utilities to ensure the robustness of the simulations. This script manages custom error types and messages specific to the models.
+- **SIR.jl**: Defines the core SIR model equations and functions to simulate infection spread in a closed population without reinfection or intervention.
+  
+- **SIRS.jl**: Extends the SIR model by incorporating a resusceptibility factor, allowing recovered individuals to become susceptible again after a set immunity period.
+  
+- **intervention.jl**: Integrates public health interventions within the SIR/SIRS framework, modifying transmission dynamics to account for interventions that reduce the transmission rate.
+  
+- **simulate_model.jl**: Runs simulations with variable parameter values, such as transmission probability (β), recovery rate, and intervention efficacy, to explore a range of intervention outcomes.
+  
+- **plot_model.jl**: Visualizes model predictions alongside observed data, enabling comparative analysis of infection trends and intervention effectiveness.
+  
+- **solve_model.jl**: A high-level script that manages model setup, equation solving, and parameter fitting for the SIRS model, including optimizations for tuning transmission rates.
+  
+- **town.jl**: Analyzes infection spread in a hypothetical second town, considering variant characteristics, estimated day of infection entry, and intervention strategies.
+  
+- **error.jl** and **immunity_model.jl**: Support sensitivity analysis and error tracking by managing error calculations and time-based immunity loss, helping refine model accuracy as parameters are adjusted.
 
-immunity_model.jl: Extends the base SIR model by incorporating immunity dynamics. It includes functions to simulate the development and loss of immunity within a population.
+## Setup
 
-plot_model.jl: Provides various visualization utilities using plotting libraries. It allows the user to generate graphs and charts for the models, illustrating the dynamics of infection, recovery, and other variables over time.
-
-simulate_model.jl: Includes core simulation routines for running the defined models over specified time steps. This script is the main engine driving the model simulations.
-
-SIR_Model.jl: Implements the classic SIR (Susceptible-Infectious-Recovered) model, detailing the infection, recovery, and transmission dynamics of a basic epidemic model.
-
-solve_model.jl: Contains numerical solvers and optimizers used to find solutions to the differential equations defining the epidemic models.
-
-## Installation
-To use this project, ensure that you have Julia installed on your system. Clone this repository, navigate to the project folder, and run the following command to install any necessary dependencies:
+### Prerequisites
+- **Julia 1.7** or newer
+- Julia packages: `DifferentialEquations` and `Plots`
