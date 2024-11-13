@@ -68,8 +68,8 @@ The **Basic!** function should not raise errors if provided with valid inputs. H
 - `solve` from the `DifferentialEquations.jl` package for solving ODE problems.
 """
 function Basic!(du, u, params, t)
-    S, I, R = u                    # Current values of S, I, R
-    β, γ, N = params               # Parameters: transmission rate, recovery rate, and population size
+    S, I, R = u         # Current values of S, I, R
+    β, γ, N = params    # Parameters: transmission rate, recovery rate, and population size
 
     # Basic SIR model equations
     du[1] = -β * S * I / N         # dS/dt
@@ -155,7 +155,7 @@ The **Force_of_infection!** function should not raise errors if provided with va
 """
 function Force_of_infection!(du, u, params, t)
     S, I, R = u
-    c, β, γ, N = params            # Include `N` in the parameter list
+    c, β, γ, N = params     # Include `N` in the parameter list
 
     # Calculate force of infection: λ = (c * β * I) / N
     λ = c * β * I / N
@@ -249,7 +249,7 @@ The **Herd_immunity!** function should not raise errors if provided with valid i
 """
 function Herd_immunity!(du, u, params, t)
     S, I, R = u
-    c, β, γ, herd_threshold, N = params  # Include `N` in the parameter list
+    c, β, γ, herd_threshold, N = params
 
     # Calculate force of infection: λ = (c * β * I) / N
     λ = c * β * I / N
@@ -266,18 +266,18 @@ function Herd_immunity!(du, u, params, t)
 end
 
 """
-# RUN_MODEL(1) - Julia Function Documentation
+# run_SIR(1) - Julia Function Documentation
 
 ## NAME
-**run_model** - Run different types of SIR (Susceptible-Infected-Recovered) models based on the specified parameters.
+**run_SIR** - Run different types of SIR (Susceptible-Infected-Recovered) models based on the specified parameters.
 
 ## SYNOPSIS
 ```
-run_model(model_type::Symbol, c, β, γ, herd_threshold, S0, I0, R0, tspan, N)
+run_SIR(model_type::Symbol, c, β, γ, herd_threshold, S0, I0, R0, tspan, N)
 ```
 
 ## DESCRIPTION
-The **run_model** function simulates various versions of the SIR model based on the specified `model_type`. It dynamically selects between different models, such as the basic SIR model, the SIR model with a force of infection, or the SIR model with herd immunity, and solves the chosen model using the `DifferentialEquations.jl` package.
+The **run_SIR** function simulates various versions of the SIR model based on the specified `model_type`. It dynamically selects between different models, such as the basic SIR model, the SIR model with a force of infection, or the SIR model with herd immunity, and solves the chosen model using the `DifferentialEquations.jl` package.
 
 The function initializes the model with appropriate parameters and initial conditions, constructs an `ODEProblem`, and solves it over the specified time span (`tspan`). This flexibility allows users to experiment with different epidemiological scenarios without modifying the core simulation logic.
 
@@ -322,7 +322,7 @@ Returns an `ODESolution` object containing the solution to the chosen SIR model.
 - **`u`**: A matrix of solution values corresponding to each time point. Each row represents a different compartment (`S`, `I`, and `R`) in the model.
 
 ## DIAGNOSTICS
-**run_model** returns an `ODESolution` object if the problem is solved successfully. However, potential issues may arise if:
+**run_SIR** returns an `ODESolution` object if the problem is solved successfully. However, potential issues may arise if:
 
 - **Invalid model type**: If `model_type` is not one of `:basic`, `:force_of_infection`, or `:herd_immunity`, the function raises an error: `Unknown model type: model_type`.
 - **Parameter Mismatch**: If the number of elements in `params` does not match the required number for a given model, the function may raise an error during the construction of the `ODEProblem`.
@@ -339,7 +339,7 @@ Returns an `ODESolution` object containing the solution to the chosen SIR model.
 - `Herd_immunity!` for the SIR model with a herd immunity threshold.
 - `solve` from the `DifferentialEquations.jl` package for solving ODE problems.
 """
-function run_model(model_type::Symbol, c, β, γ, herd_threshold, S0, I0, R0, tspan, N)
+function run_SIR(model_type::Symbol, c, β, γ, herd_threshold, S0, I0, R0, tspan, N)
     # Initial conditions
     u0 = [S0 * N, I0 * N, R0 * N]  # Scale initial proportions to match total population size `N`
 
@@ -358,34 +358,5 @@ function run_model(model_type::Symbol, c, β, γ, herd_threshold, S0, I0, R0, ts
     end
 
     # Solve the problem and return the solution
-    return solve(prob)  # Make sure to solve and return the solution
+    return solve(prob)
 end
-
-### PROTOTYPE ###
-# Function to run the modified SIRS model
-# function run_SIRS_model(c, β, γ, δ, ρ, α, N, S0, I0, SevI0, R0, tspan)
-#     # Initial conditions
-#     u0 = [S0 * N, I0 * N, SevI0 * N, R0 * N]  # Scale initial proportions to absolute values
-
-#     # Define the ODE problem
-#     prob = ODEProblem(SIRS_model!, u0, tspan, [β, γ, δ, ρ, α, N])
-
-#     # Solve the problem
-#     solution = solve(prob)
-
-#     return solution
-# end
-
-# function SIRS_model!(du, u, params, t)
-#     S, I, SevI, R = u  # Current values of S, I, SevI, and R compartments
-#     β, γ, δ, ρ, α, N = params  # Parameters
-
-#     # Calculate force of infection: λ = β * I / N
-#     λ = β * I / N
-
-#     # SIRS model equations with severe infections
-#     du[1] = -λ * S + α * R                     # dS/dt
-#     du[2] = λ * S - γ * I - δ * I              # dI/dt
-#     du[3] = δ * I - ρ * SevI                   # dSevI/dt
-#     du[4] = γ * I + ρ * SevI - α * R           # dR/dt
-# end

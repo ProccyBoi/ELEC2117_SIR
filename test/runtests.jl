@@ -7,6 +7,7 @@ c = 10              # Contact rate per day per person
 γ = 0.1             # Recovery rate (10 days) 1/10
 N = 5000            # Population size (not directly used in proportions)
 
+
 # Initial conditions (proportions of the population)
 S0 = 0.9998             # 4999 of the population is initially susceptible
 I0 = 0.0002             # 1 is initially infected

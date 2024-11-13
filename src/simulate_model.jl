@@ -78,25 +78,16 @@ The x-axis represents time in days, and the y-axis represents the number of infe
 - `plot` and `scatter!` from the `Plots.jl` library for customizing the visualizations.
 """
 function simulate_model(model_type::Symbol, c, β, γ, herd_threshold, S0, I0, R0, tspan, N; real_data_time=[], real_data_infected=[])
-    # Solve the problem
-    solution = run_model(model_type, c, β, γ, herd_threshold, S0, I0, R0, tspan, N)
+  # Solve the problem
+  solution = run_SIR(model_type, c, β, γ, herd_threshold, S0, I0, R0, tspan, N)
 
-    # Extract model data
-    time_points = solution.t
-    infected = solution[2, :]  # Infected individuals
+  # Extract model data
+  time_points = solution.t
+  infected = solution[2, :]
 
-    # Create a smoother time vector for dense plotting
-    fine_time_points = range(tspan[1], tspan[2], length=1000)
-    infected_interp = [solution(t)[2] for t in fine_time_points]
+  # Create a smoother time vector for plotting
+  fine_time_points = range(tspan[1], tspan[2], length=1000)
+  infected_interp = [solution(t)[2] for t in fine_time_points]
 
-    # Plot the infected compartment from the model
-    plt = plot(fine_time_points, infected_interp, label="Model Infected", xlabel="Time (Days)", ylabel="Number Infected",
-        title="Number of Infected Individuals Over Time", lw=2, color=:blue)
-
-    # Overlay real-world data if provided
-    if !isempty(real_data_time) && !isempty(real_data_infected)
-        scatter!(real_data_time, real_data_infected, label="Real Data", marker=:circle, ms=6, color=:orange)
-    end
-
-    return plt  # Return the plot object
+  return plot_model(solution)
 end
