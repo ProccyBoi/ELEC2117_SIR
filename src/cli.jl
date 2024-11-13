@@ -84,7 +84,7 @@ function main()
     elseif model_choice == "2"
         intervention_day = 30
         ε_i = 0.3
-        p_i = 0.8
+        p_i = 0.85
 
         # Define intervention parameters
         params = SIRSInterventionParameters(β=β, γ=γ, δ=δ, γ_s=γ_s, α=α, N=N, intervention_day=intervention_day, ε_i=ε_i, p_i=p_i)

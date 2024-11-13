@@ -125,6 +125,6 @@ function simulate_SIRS()
     solution = run_SIRS(params, S0, I0, SevI0, R0, tspan)
 
     # Plot the results with custom title and labels
-    plt = plot_SIRS(solution, title="SIRS Model with Population Dynamics", ylabel="Number of People")
+    plt = plot_SIRS(solution, title="SIRS Model", ylabel="Number of People")
     display(plt)
 end
