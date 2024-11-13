@@ -468,8 +468,8 @@ function find_optimal_compliance_across_beta_range()
     ]
 
     # Define a refined range for β and p_i
-    β_values = 0.2:0.0001:0.4
-    p_i_values = 0.0:0.01:1.0
+    β_values = 0.2:0.001:0.4
+    p_i_values = 0.0:0.001:1.0
 
     # Dictionary to store the calculated error for each (β, p_i) pair
     error_map = Dict{Tuple{Float64, Float64}, Float64}()
