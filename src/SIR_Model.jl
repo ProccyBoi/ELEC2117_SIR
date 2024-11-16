@@ -25,7 +25,7 @@ export simulate_model
 export reproduction_number, plot_herd_immunity_threshold, herd_immunity_threshold
 
 # error.jl
-export SSE_error, simulate_error, optimise_beta, optimise_ps_and_beta
+export SSE_error, simulate_error, optimise_beta, optimise_ps_and_beta, run_error
 
 # SIRS.jl
 export SIRSParameters, SIRS_model!, run_SIRS, plot_SIRS, simulate_SIRS
